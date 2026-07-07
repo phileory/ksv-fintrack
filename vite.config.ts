@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react' //  Benar
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  base: '/ksv-fintrack/',
   plugins: [
     react(),
     VitePWA({
