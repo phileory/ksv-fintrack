@@ -6,6 +6,14 @@ export default function QuickCapture() {
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('pangan');
   const [sourceOfFunds, setSourceOfFunds] = useState('');
+  
+  // 1. State Baru untuk Tanggal & Waktu (Default ke waktu lokal saat ini)
+  const [transactionDate, setTransactionDate] = useState(() => {
+    const now = new Date();
+    const offset = now.getTimezoneOffset() * 60000;
+    return new Date(now.getTime() - offset).toISOString().slice(0, 16);
+  });
+
   const [imageBlob, setImageBlob] = useState<Blob | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState('');
@@ -31,7 +39,7 @@ export default function QuickCapture() {
         category: category as any,
         amount: Number(amount),
         sourceOfFunds: sourceOfFunds || undefined,
-        dateTime: new Date(),
+        dateTime: new Date(transactionDate), // 2. Menyimpan tanggal pilihan user ke database
         receiptImage: imageBlob || undefined
       });
 
@@ -50,15 +58,10 @@ export default function QuickCapture() {
   return (
     <div style={{ maxWidth: '380px', margin: '0 auto', padding: '20px', fontFamily: '"Arial", sans-serif', color: '#000' }}>
       
-      {/* 1. Logo Stacked ala KSV Fintrack */}
+      {/* Logo Stacked */}
       <div style={{ 
-        color: '#3cdbe0', 
-        fontWeight: 'bold', 
-        fontSize: '42px', 
-        lineHeight: '0.85', 
-        fontFamily: '"Georgia", serif', 
-        marginBottom: '36px',
-        letterSpacing: '-1px'
+        color: '#3cdbe0', fontWeight: 'bold', fontSize: '42px', lineHeight: '0.85', 
+        fontFamily: '"Georgia", serif', marginBottom: '36px', letterSpacing: '-1px'
       }}>
         KSV<br />Fintrack
       </div>
@@ -71,7 +74,7 @@ export default function QuickCapture() {
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         
-        {/* 2. Input Nominal */}
+        {/* Input Nominal */}
         <div>
           <label style={{ display: 'block', textAlign: 'right', fontWeight: 'bold', marginBottom: '6px', fontSize: '14px' }}>Nominal (Rp)</label>
           <input
@@ -86,7 +89,7 @@ export default function QuickCapture() {
           />
         </div>
 
-        {/* 3. Input Kategori */}
+        {/* Input Kategori */}
         <div>
           <label style={{ display: 'block', textAlign: 'right', fontWeight: 'bold', marginBottom: '6px', fontSize: '14px' }}>Kategori</label>
           <select
@@ -95,9 +98,7 @@ export default function QuickCapture() {
             style={{ 
               width: '100%', padding: '14px 20px', boxSizing: 'border-box', 
               borderRadius: '30px', border: '2px solid #000', fontSize: '16px', 
-              backgroundColor: '#333333', // 👈 Diubah dari '#fff' menjadi abu-abu gelap sesuai gambar
-              color: '#ffffff',           // 👈 Ditambahkan agar teks pilihan di dalamnya berwarna putih dan terbaca
-              outline: 'none', appearance: 'none'
+              backgroundColor: '#333333', color: '#ffffff', outline: 'none', appearance: 'none'
             }}
           >
             <option value="pangan" style={{ backgroundColor: '#333333', color: '#fff' }}>Pangan</option>
@@ -110,8 +111,25 @@ export default function QuickCapture() {
             <option value="lain-lain" style={{ backgroundColor: '#333333', color: '#fff' }}>Lain-lain</option>
           </select>
         </div>
-       
-        {/* 4. Input Sumber Dana */}
+
+        {/* 3. Field Baru: Input Tanggal & Waktu */}
+        <div>
+          <label style={{ display: 'block', textAlign: 'right', fontWeight: 'bold', marginBottom: '6px', fontSize: '14px' }}>Tanggal & Waktu</label>
+          <input
+            type="datetime-local"
+            value={transactionDate}
+            onChange={(e) => setTransactionDate(e.target.value)}
+            style={{ 
+              width: '100%', padding: '14px 20px', boxSizing: 'border-box', 
+              borderRadius: '30px', border: '2px solid #000', fontSize: '16px', 
+              backgroundColor: '#333333', color: '#ffffff', outline: 'none',
+              colorScheme: 'dark' // Memastikan ikon kalender bawaan browser/HP ikut berwarna terang
+            }}
+            required
+          />
+        </div>
+
+        {/* Input Sumber Dana */}
         <div>
           <label style={{ display: 'block', textAlign: 'right', fontWeight: 'bold', marginBottom: '6px', fontSize: '14px' }}>Sumber Dana (Optional)</label>
           <input
@@ -125,7 +143,7 @@ export default function QuickCapture() {
           />
         </div>
 
-        {/* 5. Input Foto Struk */}
+        {/* Input Foto Struk */}
         <div>
           <label style={{ display: 'block', textAlign: 'right', fontWeight: 'bold', marginBottom: '6px', fontSize: '14px' }}>Foto Struk (Optional)</label>
           <label style={{ 
@@ -140,7 +158,7 @@ export default function QuickCapture() {
           )}
         </div>
 
-        {/* 6. Tombol Simpan Transaksi dengan Glow Shadow */}
+        {/* Tombol Simpan */}
         <button
           type="submit"
           style={{ 
@@ -152,7 +170,7 @@ export default function QuickCapture() {
           Simpan Transaksi
         </button>
 
-        {/* 7. Tombol Pilihan Tipe Besar di Bagian Bawah */}
+        {/* Tombol Pilihan Tipe */}
         <div style={{ display: 'flex', gap: '16px', marginTop: '16px' }}>
           <button
             type="button"
