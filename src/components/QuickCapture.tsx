@@ -94,20 +94,23 @@ export default function QuickCapture() {
             onChange={(e) => setCategory(e.target.value)}
             style={{ 
               width: '100%', padding: '14px 20px', boxSizing: 'border-box', 
-              borderRadius: '30px', border: '2px solid #000', fontSize: '16px', backgroundColor: '#fff', outline: 'none', appearance: 'none'
+              borderRadius: '30px', border: '2px solid #000', fontSize: '16px', 
+              backgroundColor: '#333333', // 👈 Diubah dari '#fff' menjadi abu-abu gelap sesuai gambar
+              color: '#ffffff',           // 👈 Ditambahkan agar teks pilihan di dalamnya berwarna putih dan terbaca
+              outline: 'none', appearance: 'none'
             }}
           >
-            <option value="pangan">Pangan</option>
-            <option value="sandang">Sandang</option>
-            <option value="papan">Papan</option>
-            <option value="ortu">Orang Tua</option>
-            <option value="pasangan">Pasangan</option>
-            <option value="sedekah">Sedekah / Lainnya</option>
-            <option value="keinginan">Keinginan</option>
-            <option value="lain-lain">Lain-lain</option>
+            <option value="pangan" style={{ backgroundColor: '#333333', color: '#fff' }}>Pangan</option>
+            <option value="sandang" style={{ backgroundColor: '#333333', color: '#fff' }}>Sandang</option>
+            <option value="papan" style={{ backgroundColor: '#333333', color: '#fff' }}>Papan</option>
+            <option value="ortu" style={{ backgroundColor: '#333333', color: '#fff' }}>Orang Tua</option>
+            <option value="pasangan" style={{ backgroundColor: '#333333', color: '#fff' }}>Pasangan</option>
+            <option value="sedekah" style={{ backgroundColor: '#333333', color: '#fff' }}>Sedekah / Lainnya</option>
+            <option value="keinginan" style={{ backgroundColor: '#333333', color: '#fff' }}>Keinginan</option>
+            <option value="lain-lain" style={{ backgroundColor: '#333333', color: '#fff' }}>Lain-lain</option>
           </select>
         </div>
-
+       
         {/* 4. Input Sumber Dana */}
         <div>
           <label style={{ display: 'block', textAlign: 'right', fontWeight: 'bold', marginBottom: '6px', fontSize: '14px' }}>Sumber Dana (Optional)</label>
