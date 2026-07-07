@@ -1,18 +1,36 @@
+import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { toJpeg } from 'html-to-image';
 import { Download } from 'lucide-react';
 
-// Palet warna cerah untuk 8 kategori utama
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF19A3', '#19FF5A', '#8E8E8E'];
 
 export default function Visualization() {
-  // Membaca data transaksi secara realtime dari IndexedDB
+  // 1. State untuk Filter Tanggal (Default: Dari tanggal 1 bulan ini sampai hari ini)
+  const [startDate, setStartDate] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+  });
+  const [endDate, setEndDate] = useState(() => {
+    return new Date().toISOString().slice(0, 10);
+  });
+
+  // Membaca semua data dari database lokal
   const transactions = useLiveQuery(() => db.transactions.toArray()) || [];
 
-  // 1. Pemrosesan Data: Agregat Berdasarkan Kategori Penggunaan
-  const categoryData = transactions.reduce((acc: any, curr) => {
+  // 2. Proses Penyaringan Data Berdasarkan Rentang Tanggal Pilihan
+  const filteredTransactions = transactions.filter((curr) => {
+    const transactionTime = new Date(curr.dateTime).getTime();
+    const startConstraint = new Date(`${startDate}T00:00:00`).getTime();
+    const endConstraint = new Date(`${endDate}T23:59:59`).getTime();
+    
+    return transactionTime >= startConstraint && transactionTime <= endConstraint;
+  });
+
+  // 3. Agregat Kategori dari Data yang Sudah Disaring
+  const categoryData = filteredTransactions.reduce((acc: any, curr) => {
     if (curr.type === 'pengeluaran') {
       const existing = acc.find((item: any) => item.name === curr.category);
       if (existing) {
@@ -24,8 +42,8 @@ export default function Visualization() {
     return acc;
   }, []);
 
-  // 2. Pemrosesan Data: Agregat Berdasarkan Sumber Dana
-  const sourceData = transactions.reduce((acc: any, curr) => {
+  // 4. Agregat Sumber Dana dari Data yang Sudah Disaring
+  const sourceData = filteredTransactions.reduce((acc: any, curr) => {
     const sourceName = curr.sourceOfFunds || 'Tanpa Keterangan';
     const existing = acc.find((item: any) => item.name === sourceName);
     if (existing) {
@@ -36,7 +54,6 @@ export default function Visualization() {
     return acc;
   }, []);
 
-  // 3. Fungsi Ekspor Dashboard ke JPG (Offline Client-Side)
   const exportToJpeg = () => {
     const node = document.getElementById('report-container');
     if (!node) return;
@@ -44,7 +61,7 @@ export default function Visualization() {
     toJpeg(node, { backgroundColor: '#f8fafc', quality: 0.95 })
       .then((dataUrl) => {
         const link = document.createElement('a');
-        link.download = `KSV-FinTrack-Report-${new Date().toISOString().slice(0, 7)}.jpg`;
+        link.download = `KSV-Report-${startDate}-to-${endDate}.jpg`;
         link.href = dataUrl;
         link.click();
       })
@@ -53,15 +70,14 @@ export default function Visualization() {
       });
   };
 
-  // Format angka ke Rupiah tanpa library eksternal
   const formatRupiah = (val: any) => 
-  new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 })
-    .format(Number(val) || 0);
+    new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 })
+      .format(Number(val) || 0);
 
   return (
     <div style={{ maxWidth: '400px', margin: '0 auto', padding: '12px', fontFamily: '"Arial", sans-serif' }}>
       
-      {/* Tombol Aksi Ekspor */}
+      {/* Tombol Unduh */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
         <button
           onClick={exportToJpeg}
@@ -75,17 +91,50 @@ export default function Visualization() {
         </button>
       </div>
 
-      {/* Container utama yang akan di-capture menjadi gambar */}
+      {/* Container utama laporan */}
       <div id="report-container" style={{ padding: '16px', borderRadius: '24px', backgroundColor: '#f8fafc' }}>
         <h3 style={{ margin: '0 0 4px 0', color: '#0f172a' }}>Dashboard Analisis</h3>
-        <p style={{ margin: '0 0 24px 0', fontSize: '14px', color: '#64748b' }}>Bulan berjalan (Lokal)</p>
+        <p style={{ margin: '0 0 20px 0', fontSize: '14px', color: '#64748b' }}>Data Transaksi Lokal</p>
 
-        {transactions.length === 0 ? (
-          <p style={{ textAlign: 'center', color: '#94a3b8', padding: '40px 0' }}>Belum ada data transaksi.</p>
+        {/* 5. UI Komponen Filter Tanggal (Kapsul Abu-Abu Gelap) */}
+        <div style={{ 
+          display: 'flex', gap: '10px', marginBottom: '24px', backgroundColor: '#fff', 
+          padding: '14px', borderRadius: '20px', border: '2px solid #000' 
+        }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', marginBottom: '4px', textAlign: 'right' }}>DARI</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              style={{
+                width: '100%', padding: '8px 12px', borderRadius: '20px', border: '2px solid #000',
+                backgroundColor: '#333333', color: '#fff', fontSize: '13px', outline: 'none', colorScheme: 'dark'
+              }}
+            />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', marginBottom: '4px', textAlign: 'right' }}>SAMPAI</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              style={{
+                width: '100%', padding: '8px 12px', borderRadius: '20px', border: '2px solid #000',
+                backgroundColor: '#333333', color: '#fff', fontSize: '13px', outline: 'none', colorScheme: 'dark'
+              }}
+            />
+          </div>
+        </div>
+
+        {filteredTransactions.length === 0 ? (
+          <p style={{ textAlign: 'center', color: '#94a3b8', padding: '40px 0', backgroundColor: '#fff', borderRadius: '20px', border: '2px solid #000' }}>
+            Tidak ada transaksi pada rentang tanggal ini.
+          </p>
         ) : (
           <>
-            {/* Grafik 1: Kategori Penggunaan */}
-            <div style={{ marginBottom: '32px', backgroundColor: '#fff', padding: '16px', borderRadius: '20px', border: '2px solid #000' }}>
+            {/* Grafik 1: Kategori */}
+            <div style={{ marginBottom: '24px', backgroundColor: '#fff', padding: '16px', borderRadius: '20px', border: '2px solid #000' }}>
               <h4 style={{ margin: '0 0 12px 0', textAlign: 'center' }}>Alokasi Dana Keluar</h4>
               <div style={{ width: '100%', height: 220 }}>
                 <ResponsiveContainer>
@@ -94,7 +143,7 @@ export default function Visualization() {
                       data={categoryData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={60} // Membuat efek Donut Chart
+                      innerRadius={60}
                       outerRadius={80}
                       paddingAngle={4}
                       dataKey="value"
